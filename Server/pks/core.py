@@ -56,14 +56,14 @@ class Core:
             return """
 [options]
     logfile     = /var/log/knockd.log
-    interface   = {network_interface}
+    interface   = any
 
 [opencloseSSH]
     sequence                = {open_sequence}
-    seq_timeout             = 5
+    seq_timeout             = 60
     start_command           = /sbin/iptables -I INPUT -s %IP% -p tcp --dport {ssh_port} -j ACCEPT
     tcpflags                = syn
-    cmd_timeout             = 30
+    cmd_timeout             = 60
     stop_command            = /sbin/iptables -D INPUT -s %IP% -p tcp --dport {ssh_port} -j ACCEPT
         """.format(
                 open_sequence=", ".join([str(p) for p in new_sequence]),
