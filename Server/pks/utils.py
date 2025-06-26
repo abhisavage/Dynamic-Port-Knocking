@@ -8,24 +8,10 @@ from .config import Config
 
 class Utils:
 
-    """
-
-    This class is a collection of utility functions, that assist the core and the commands class in their tasks.
-
-    Classes Utils and Core are pretty much the same though.
-
-    All functions in this class should be static.
-
-    """
 
     @staticmethod
     def start_service(service: str) -> bool:
-        """
-        Starts a service.
-
-        :param str service: A system service name.
-        :return bool: True if the operation succeeded, False otherwise.
-        """
+        
         code = int(subprocess.call("sudo systemctl start " + service, shell=True))
         if code == 0:
             logging.info("Started service %s successfully (code %s).", service, code)
@@ -36,12 +22,7 @@ class Utils:
 
     @staticmethod
     def stop_service(service: str) -> bool:
-        """
-        Stops a service.
-
-        :param str service: A system service name.
-        :return bool: True if the operation succeeded, False otherwise.
-        """
+        
         code = int(subprocess.call("sudo systemctl stop " + service, shell=True))
         if code == 0:
             logging.info("Stopped service %s successfully (code %s).", service, code)
@@ -52,14 +33,7 @@ class Utils:
 
     @staticmethod
     def restart_service(service: str) -> bool:
-        """
-        Restarts an os service.
-
-        :param str service: A system service name.
-        :return bool: True if the operation succeeded, False otherwise.
-
-        .. seealso: Utils.start_service(), Utils.stop_service()
-        """
+        
         if Utils.stop_service(service) and Utils.start_service(service):
             return True
         else:
@@ -71,13 +45,7 @@ class Utils:
 
     @staticmethod
     def install_package(packet_manager: str, package: str) -> bool:
-        """
-        Tries to install a system package.
-
-        :param str packet_manager:
-        :param str package:
-        :return bool: True if the operation succeeded, False otherwise.
-        """
+        
         code = int(subprocess.call("sudo {} install {} -y".format(packet_manager, package), shell=True))
         if code == 0:
             return True
@@ -86,12 +54,7 @@ class Utils:
 
     @staticmethod
     def filter_port_list(port_list: list) -> list:
-        """
-        Takes a list of ports and filters them so that they suit the Config.
-
-        :param list port_list: A list of integers
-        :return list: A list with each port filtered depending of the configuration.
-        """
+        
         first_acceptable_port: int = Config.acceptable_port_range[0]
         last_acceptable_port: int = Config.acceptable_port_range[-1:][0]
 

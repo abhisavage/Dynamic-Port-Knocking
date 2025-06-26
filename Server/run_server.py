@@ -1,5 +1,3 @@
-# -*- coding: UTF8 -*-
-
 import sys
 
 import pks

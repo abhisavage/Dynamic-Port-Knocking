@@ -1,5 +1,3 @@
-# -*- coding: UTF8 -*-
-
 from scapy.all import *
 from time import sleep
 import socket
@@ -8,21 +6,13 @@ from .config import Config
 
 
 def send_tcp_packet(server: str, port: int) -> None:
-    """
-    Send a TCP SYN packet to the specified server:port.
-
-    :param str server: A server's address. IP or DNS name.
-    :param int port: The port to connect to.
-    """
     try:
-        # Create a TCP socket
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
-        # Try to connect to the port
         s.connect((server, port))
         s.close()
     except:
-        pass  # We don't care if the connection fails, we just want to send the SYN packet
+        pass
 
 
 def main() -> None:

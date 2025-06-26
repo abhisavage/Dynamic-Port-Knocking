@@ -1,9 +1,7 @@
-# -*- coding: UTF8 -*-
-
 import pks
 
 if not pks.Config.use_open_sequence:
-    bot = pks.BotHandler()  # Create a new bot instance
+    bot = pks.BotHandler()
 
     chan = pks.Channels(bot)
     cmd = pks.Commands(chan)

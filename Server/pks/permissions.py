@@ -1,5 +1,3 @@
-# -*- coding: UTF8 -*-
-
 import logging
 
 from .database import Database
@@ -7,10 +5,6 @@ from .config import Config
 
 
 class Permissions:
-
-    # This variable contains the permissions that can be used to set a command's rights.
-    # They represent permissions sets, not groups.
-    # First item is the name of the set, the second is a description (used nowhere, only informational).
     permission_sets = [
         ("manage_sequences", "Can manage new and old sequences."),
         ("modify_bot_behaviour", "Can take measures that have a direct impact on the bot's behaviour."),
@@ -32,10 +26,6 @@ class Permissions:
         del self.db
 
     def set_telegram_admins(self) -> None:
-        """
-        Promote the system account (1) and the users defined in
-        `pks.config.telegram_user_admin_list` as the Telegram bot's admins.
-        """
         self.add_user_to_group("1", "admin")  # 1 is the system account (arbitrary)
         for admin in Config.telegram_user_admin_list:
             self.add_user_to_group(
@@ -44,21 +34,11 @@ class Permissions:
             )
 
     def user_exists(self, user_id: str) -> bool:
-        """
-        Checks if the user exists in the database.
-
-        :param str user_id: A Telegram User ID.
-        :return bool: True if he does, False otherwise.
-        """
+        
         return self.db.key_exists(self.db.db_columns[0], user_id)
 
     def get_group_members(self, group: str) -> list:
-        """
-        Parses the database to find which users are part of a group, and return a list of these users.
-
-        :param str group: A group name.
-        :return list: The group's users.
-        """
+        
         groups = []
         if group in self.get_valid_groups():
             all_users_raw = self.db.query_column(self.db.db_columns[0])
@@ -69,40 +49,20 @@ class Permissions:
         return groups
 
     def get_valid_groups(self) -> list:
-        """
-        Returns a list of the valid groups defined by the attribute `permission_groups`.
-
-        :return list: A list of valid groups.
-        """
+        
         return [v[0] for v in [list(g.keys()) for g in self.permission_groups]]
 
     def is_group_valid(self, group: str) -> bool:
-        """
-        Searches attribute "permission_groups" to check if the group specified is valid.
-
-        :param str group: A group name.
-        :return bool: True if the group is valid, False otherwise.
-
-        .. seealso: Permissions.get_valid_groups()
-        """
+        
         return group in self.get_valid_groups()
 
     def create_user(self, user_id: str) -> None:
-        """
-        .. seealso: PermissionsDatabase.create_user()
-
-        :param str user_id: A Telegram User ID.
-        """
+        
         if not self.user_exists(user_id):
             self.db.create_user(user_id)
 
     def add_user_to_group(self, user_id: str, group: str) -> None:
-        """
-        Add a user to a group.
-
-        :param str user_id: A Telegram User ID.
-        :param str group: A group name.
-        """
+        
         if not self.is_group_valid(group):
             return
         # Creates the user if it doesn't already exists in the database.
@@ -112,24 +72,14 @@ class Permissions:
         logging.info(f"User {user_id} added to group {group} successfully.")
 
     def remove_user_from_group(self, user_id: str, group: str) -> None:
-        """
-        Remove user from a group.
-
-        :param str user_id: A Telegram User ID.
-        :param str group: A group name.
-        """
+        
         if not self.is_group_valid(group):
             return
         self.db.remove_user_from_group(user_id, group)
         logging.info(f"User {user_id} removed from group {group} successfully.")
 
     def get_groups_permissions(self, user_id: str) -> list:
-        """
-        Get a list of permissions granted by the user's groups membership.
-
-        :param str user_id: A Telegram User ID.
-        :return list: A list of permissions granted by the groups the user is part of.
-        """
+        
         u_groups = self.db.list_groups(user_id)
 
         p_groups = ["none"]

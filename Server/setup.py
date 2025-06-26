@@ -1,13 +1,3 @@
-"""
-
-********** IMPORTANT NOTE **********
-
-You must first configure your server following this guide (ONLY THE IPTABLES PART) :
-
-https://www.digitalocean.com/community/tutorials/how-to-use-port-knocking-to-hide-your-ssh-daemon-from-attackers-on-ubuntu
-
-"""
-
 import sys
 
 from pks.config import Config

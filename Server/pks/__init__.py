@@ -1,12 +1,3 @@
-# -*- coding: UTF8 -*-
-
-"""
-
-Main package.
-Most of the time, you want to modify "commands.py" instead of this file.
-
-"""
-
 import logging
 import time
 
@@ -16,9 +7,8 @@ from .commands import Commands
 from .config import Config
 
 
-# Setup the configuration for logging.
 logging.basicConfig(
-    format='%(asctime)s - %(message)s',  # We add a timestamp to each log entries.
+    format='%(asctime)s - %(message)s',
     level=logging.INFO,
     datefmt='%m/%d/%Y %I:%M:%S %p',
     filename="/var/log/pks.log",
@@ -44,16 +34,7 @@ class PKS:
         del self.chan
 
     def __set_commands(self, update: dict) -> None:
-        """
-        This function is used to set the class attribute "self.commands_l",
-        which contains every bot command as a tuple of three items:
-        The first is a callback to the associated function from the class Commands (accessible through
-        the object "commands_o").
-        The second is an integer indicating how many arguments are expected FROM THE USER.
-        These user-passed arguments are separated by spaces, such as "/add_perm user group".
-        The third is a list of arguments.
-        Note: this arg list is unpacked when calling the function, so each list item is an argument on its own.
-        """
+        
         self.commands_l = {
             "/generate":
                 (self.commands_o.generate, 0, []),
@@ -77,10 +58,7 @@ class PKS:
         self.commands_l.update({"/help": [self.commands_o.help, 0, [list(self.commands_l.keys())]]})
 
     def get_chat_text(self, update: dict) -> str:
-        """
-        :param dict update: A Telegram update.
-        :return str: A chat ID.
-        """
+        
         try:
             chat_text = update['message']['text']  # May raise KeyError for some messages.
         except KeyError:
@@ -88,24 +66,15 @@ class PKS:
         return chat_text
 
     def get_chat_id(self, update: dict) -> str:
-        """
-        :param dict update: A Telegram update.
-        :return str: A chat ID.
-        """
+        
         return update['message']['chat']['id']
 
     def get_message_id(self, update: dict) -> str:
-        """
-        :param dict update: A Telegram update.
-        :return str: A message ID.
-        """
+       
         return update['message']['message_id']
 
     def get_user_id(self, update: dict) -> str:
-        """
-        :param dict update: A Telegram update.
-        :return str: A User ID.
-        """
+        
         return update['message']['from']['id']
 
     def are_args_valid(self, found_args, expected_args) -> tuple:
@@ -134,13 +103,10 @@ class PKS:
 
         chat_msg = chat_text.split(" ")
 
-        # Get the command
         command = chat_msg[0].split("@")[0]
-        # Get function
         func = self.commands_l.get(command, [self.commands_o.invalid])[0]
-        # Get how many arguments should be provided by the user.
         num_exp_args = self.commands_l.get(command, [None, 0])[1]
-        # Get additional arguments
+        
         args = self.commands_l.get(command, [None, None, []])[2]
 
         chat_msg.pop(0)  # Removes the command, to only have the arguments.
@@ -161,9 +127,7 @@ class PKS:
             self.bot.send_message(chat_id, message, message_id)
 
     def main(self, offset: int = 0) -> None:
-        """
-        :param int offset: Used to filter the messages already processed. Could be used to skip messages.
-        """
+        
         while True:
             all_updates = self.bot.get_updates(offset)
 
