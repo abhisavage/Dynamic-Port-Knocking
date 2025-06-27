@@ -1,5 +1,7 @@
 import inspect
 import logging
+import threading
+import time
 
 from functools import wraps
 
@@ -32,6 +34,9 @@ class Commands:
         self.user_id = "1"
         self.permissions.set_telegram_admins()
         self.channels = chan
+        self._sequence_thread = None  # Thread for periodic sequence generation
+        self._sequence_thread_stop_event = threading.Event()
+        self._sequence_thread_user_id = None  # Track which user started /generate
         self.start()
 
     def __del__(self):
@@ -76,17 +81,45 @@ class Commands:
 
     @permissions_required("manage_sequences")
     def generate(self) -> str:
-        
+        # If already running, ignore
+        if self._sequence_thread and self._sequence_thread.is_alive():
+            return "Periodic sequence generation is already running. Use /stop to stop it."
+
+        # Start periodic sequence generation in a background thread
+        self._sequence_thread_stop_event.clear()
+        self._sequence_thread_user_id = self.user_id  # Only send to the requesting user
+        self._sequence_thread = threading.Thread(target=self._periodic_sequence_update, daemon=True)
+        self._sequence_thread.start()
+
+        # Also generate and send the first sequence immediately
         if Config.use_open_sequence:
             seq = Config.open_sequence
         else:
             seq = Core.generate_new_sequence()
-        # Apply sequence
         Core.set_open_sequence(seq)
         message = "New sequence: " + ", ".join([str(p) for p in seq])
         if not self.running:
             message += "\nWARNING: the bot is stopped. Start it with /start."
-        return message
+        # Send to the requesting user only
+        self.channels.bot.send_message(self.user_id, message)
+        return "Started periodic port sequence generation. Use /stop to stop."
+
+    def _periodic_sequence_update(self):
+        while not self._sequence_thread_stop_event.is_set():
+            time.sleep(60)
+            if self._sequence_thread_stop_event.is_set():
+                break
+            if Config.use_open_sequence:
+                seq = Config.open_sequence
+            else:
+                seq = Core.generate_new_sequence()
+            Core.set_open_sequence(seq)
+            message = "New sequence: " + ", ".join([str(p) for p in seq])
+            if not self.running:
+                message += "\nWARNING: the bot is stopped. Start it with /start."
+            # Send to the user who started /generate
+            if self._sequence_thread_user_id:
+                self.channels.bot.send_message(self._sequence_thread_user_id, message)
 
     @permissions_required("admin_access")
     def status(self) -> str:
@@ -144,14 +177,20 @@ class Commands:
 
     @permissions_required("modify_bot_behaviour")
     def stop(self) -> str:
-        
+        # Stop periodic sequence generation if running
+        if self._sequence_thread and self._sequence_thread.is_alive():
+            self._sequence_thread_stop_event.set()
+            self._sequence_thread.join(timeout=2)
+            self._sequence_thread = None
+            self._sequence_thread_user_id = None
+        # Stop knockd as before
         if self.running:
             if not Utils.stop_service("knockd"):
                 return "Could not stop knockd ; unknown error."
             self.running = False
-            return "Stopped knockd."
+            return "Stopped knockd and periodic sequence generation."
         else:
-            return "Knockd already stopped."
+            return "Knockd already stopped. Periodic sequence generation (if any) also stopped."
 
     @permissions_required("modify_bot_behaviour", "admin_access")
     def shutdown(self):
