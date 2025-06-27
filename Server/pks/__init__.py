@@ -89,6 +89,8 @@ class PKS:
     def process(self, update: dict) -> None:
         self.__set_commands(update)
 
+        logging.info(f"Full update received: {update}")
+
         chat_text: str = self.get_chat_text(update)
         chat_id: str = self.get_chat_id(update)
         message_id: str = self.get_message_id(update)

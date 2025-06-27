@@ -1,7 +1,0 @@
-flask
-pyotp
-qrcode
-pillow
-waitress
-requests
-python-telegram-bot 
