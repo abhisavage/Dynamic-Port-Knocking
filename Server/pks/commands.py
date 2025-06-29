@@ -36,7 +36,7 @@ class Commands:
         self.channels = chan
         self._sequence_thread = None  # Thread for periodic sequence generation
         self._sequence_thread_stop_event = threading.Event()
-        self._sequence_thread_user_id = None  # Track which user started /generate
+        self._sequence_thread_user_ids = []  # Track ALL users who requested /generate
         self.start()
 
     def __del__(self):
@@ -81,13 +81,17 @@ class Commands:
 
     @permissions_required("manage_sequences")
     def generate(self) -> str:
-        # If already running, ignore
+        # If already running, add this user to the list
         if self._sequence_thread and self._sequence_thread.is_alive():
-            return "Periodic sequence generation is already running. Use /stop to stop it."
+            if self.user_id not in self._sequence_thread_user_ids:
+                self._sequence_thread_user_ids.append(self.user_id)
+                return f"Added you to the sequence generation list. Total users: {len(self._sequence_thread_user_ids)}"
+            else:
+                return "You are already receiving periodic sequences. Use /stop to stop for everyone."
 
         # Start periodic sequence generation in a background thread
         self._sequence_thread_stop_event.clear()
-        self._sequence_thread_user_id = self.user_id  # Only send to the requesting user
+        self._sequence_thread_user_ids = [self.user_id]  # Start with this user
         self._sequence_thread = threading.Thread(target=self._periodic_sequence_update, daemon=True)
         self._sequence_thread.start()
 
@@ -102,7 +106,7 @@ class Commands:
             message += "\nWARNING: the bot is stopped. Start it with /start."
         # Send to the requesting user only
         self.channels.bot.send_message(self.user_id, message)
-        return "Started periodic port sequence generation. Use /stop to stop."
+        return "Started periodic port sequence generation. Use /stop to stop for everyone."
 
     def _periodic_sequence_update(self):
         while not self._sequence_thread_stop_event.is_set():
@@ -117,9 +121,9 @@ class Commands:
             message = "New sequence: " + ", ".join([str(p) for p in seq])
             if not self.running:
                 message += "\nWARNING: the bot is stopped. Start it with /start."
-            # Send to the user who started /generate
-            if self._sequence_thread_user_id:
-                self.channels.bot.send_message(self._sequence_thread_user_id, message)
+            # Send to ALL users who requested /generate
+            for user_id in self._sequence_thread_user_ids:
+                self.channels.bot.send_message(user_id, message)
 
     @permissions_required("admin_access")
     def status(self) -> str:
@@ -182,7 +186,7 @@ class Commands:
             self._sequence_thread_stop_event.set()
             self._sequence_thread.join(timeout=2)
             self._sequence_thread = None
-            self._sequence_thread_user_id = None
+            self._sequence_thread_user_ids = []  # Clear all users
         # Stop knockd as before
         if self.running:
             if not Utils.stop_service("knockd"):

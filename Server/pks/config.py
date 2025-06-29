@@ -3,7 +3,7 @@ class Config:
     telegram_timeout: int = 5
 
     telegram_user_admin_list: list = ["5145713074"]
-    telegram_user_whitelist: list = ["5145713074"]
+    telegram_user_whitelist: list = ["5145713074", "6310984020"]
     telegram_user_blacklist: list = []
     acceptable_port_range: range = range(1025, 65536)
     ports_blacklist: list = []
